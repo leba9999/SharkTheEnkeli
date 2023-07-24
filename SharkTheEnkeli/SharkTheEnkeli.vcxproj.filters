@@ -19,10 +19,10 @@
     <Filter Include="Source Files\ImGUI">
       <UniqueIdentifier>{31b36a3d-1ac4-40a4-8bad-6638ba6c1caf}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Command">
+    <Filter Include="Header Files\Commands">
       <UniqueIdentifier>{f0738ee2-5db2-4b69-85ff-2252ed937d4f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Command">
+    <Filter Include="Source Files\Commands">
       <UniqueIdentifier>{359e8d03-6605-4156-b41f-20f7ca4247b7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -57,11 +57,23 @@
     <ClCompile Include="Console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VersionCommand.cpp">
-      <Filter>Source Files\Command</Filter>
+    <ClCompile Include="Commands\VersionCommand.cpp">
+      <Filter>Source Files\Commands</Filter>
     </ClCompile>
-    <ClCompile Include="HelpCommand.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Commands\UnknownCommand.cpp">
+      <Filter>Source Files\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Commands\HelpCommand.cpp">
+      <Filter>Source Files\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Commands\ClearCommand.cpp">
+      <Filter>Source Files\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Commands\CloseGameCommand.cpp">
+      <Filter>Source Files\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Commands\FullscreenCommand.cpp">
+      <Filter>Source Files\Commands</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -107,14 +119,26 @@
     <ClInclude Include="Console.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VersionCommand.h">
-      <Filter>Header Files\Command</Filter>
+    <ClInclude Include="Commands\VersionCommand.h">
+      <Filter>Header Files\Commands</Filter>
     </ClInclude>
-    <ClInclude Include="Command.h">
-      <Filter>Header Files\Command</Filter>
+    <ClInclude Include="Commands\Command.h">
+      <Filter>Header Files\Commands</Filter>
     </ClInclude>
-    <ClInclude Include="HelpCommand.h">
-      <Filter>Header Files\Command</Filter>
+    <ClInclude Include="Commands\HelpCommand.h">
+      <Filter>Header Files\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Commands\UnknownCommand.h">
+      <Filter>Header Files\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Commands\ClearCommand.h">
+      <Filter>Header Files\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Commands\CloseGameCommand.h">
+      <Filter>Header Files\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Commands\FullscreenCommand.h">
+      <Filter>Header Files\Commands</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

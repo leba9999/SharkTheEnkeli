@@ -1,6 +1,8 @@
 #include "Game.h"
-#include "VersionCommand.h"
-#include "HelpCommand.h"
+
+#include "Commands/VersionCommand.h"
+#include "Commands/CloseGameCommand.h"
+#include "Commands/FullscreenCommand.h"
 
 void Game::pollEvents()
 {
@@ -10,75 +12,127 @@ void Game::pollEvents()
         ImGui::SFML::ProcessEvent(event);
         if (event.type == sf::Event::Closed)
             window.close();
-
+        if (event.type == sf::Event::LostFocus) {
+            console->print("Lost Focus");
+            state = PAUSED;
+            focus = false;
+        }
+        if (event.type == sf::Event::GainedFocus) {
+            console->print("Gained Focus");
+            focus = true;
+        }
+        currentLevel->pollEvents(event);
     }
 }
 
 void Game::update()
 {
     ImGui::SFML::Update(window, deltaClock.restart());
+    currentLevel->update();
     console->update();
-    
 }
 
 void Game::draw()
 {
-
-    sf::CircleShape shape(100.f);
-    shape.setFillColor(sf::Color::Green);
     window.clear();
-    window.draw(shape);
+    window.draw(*currentLevel);
     ImGui::SFML::Render(window);
     window.display();
 }
 
+void Game::init()
+{
+    state = RUNNING;
+    console->setGame(this);
+    debug = false;
+    fullscreen = false;
+    vsync = false;
+    resetWindow = false;
+    levelId = 0;
+}
+
+void Game::createWindow()
+{
+
+    sf::ContextSettings settings;
+    settings.antialiasingLevel = 0;
+    if (fullscreen) {
+        window.create(sf::VideoMode(1280, 720), "Shark The Enkeli", sf::Style::Fullscreen, settings);
+    }
+    else {
+        window.create(sf::VideoMode(1280, 720), "Shark The Enkeli", sf::Style::Default, settings);
+    }
+    window.setVerticalSyncEnabled(vsync);
+}
+
 Game::Game(int argc, char* argv[])
 {
-    state = MAINMENU;
-    console->setGame(this);
-    // Printing the number of arguments
-    std::cout << "Number of arguments: " << argc << std::endl;
-
-    // Printing each argument
-    std::cout << "Arguments:" << std::endl;
-    for (int i = 0; i < argc; ++i) {
-        std::cout << "Argument " << i << ": " << argv[i] << std::endl;
-    }
-
-    const std::string str = "-debug";
-
+    init();
+    const std::string str[] = { "-debug", "-windowed", "-fullscreen", "-vsync"};
     for (size_t i = 0; i < argc; i++)
     {
-        if (!str.compare(argv[i])) {
+        if (!str[0].compare(argv[i])) {
             debug = true;
             console->print("debug mode active!");
-            console->print("Welcome to Shark The Enkeli debug console");
+            console->print("Welcome to Shark The Enkeli debug console", ImVec4(1.0f, 0.8f, 0.01f, 1.0f));
+            console->print("Enter ? to see commands", ImVec4(1.0f, 0.8f, 0.01f, 1.0f));
+        }
+        if (!str[1].compare(argv[i])) {
+            fullscreen = false;
+            console->print("windowed mode active!");
+        }
+        if (!str[2].compare(argv[i])) {
+            fullscreen = true;
+            console->print("fullscreen mode active!");
+        }
+        if (!str[3].compare(argv[i])) {
+            vsync = true;
+            console->print("vsync active!");
         }
     }
 }
 
-Game::Game() 
-{
-    state = MAINMENU;
-}
 Game::~Game()
 {
+    delete console;
+    delete currentLevel;
 }
 
 void Game::run()
 {
-    sf::ContextSettings settings;
-    settings.antialiasingLevel = 0;
-    window.create(sf::VideoMode(1280, 720), "Shark The Enkeli", sf::Style::Default, settings);
-    ImGui::SFML::Init(window);
+    do {
+        resetWindow = false;
+        createWindow();
+        ImGui::SFML::Init(window);
+        while (window.isOpen())
+        {
+            pollEvents();
+            update();
+            draw();
+        }
+        ImGui::SFML::Shutdown();
+    } while (resetWindow);
+}
 
-    while (window.isOpen())
-    {
-        pollEvents();
-        update();
-        draw();
-    }
-    ImGui::SFML::Shutdown();
+void Game::close()
+{
+    window.close();
+}
+
+void Game::resetwindow()
+{
+    resetWindow = true;
+    close();
+}
+
+bool Game::getFocus()
+{
+    return focus;
+}
+
+sf::RenderWindow &Game::getWindow()
+{
+    return window;
 }
 
 ILevel* Game::getCurrentLevel()
@@ -93,16 +147,10 @@ std::string Game::getVersion()
 
 bool Game::executeCommand(Command* command)
 {
-    VersionCommand* versionCmd = dynamic_cast<VersionCommand*>(command);
-    if (versionCmd) {
-        versionCmd->execute();
-        return true;
+    FullscreenCommand* fullscreenCmd = dynamic_cast<FullscreenCommand*>(command);
+    if (fullscreenCmd) {
+        fullscreenCmd->enableFullscreen(&fullscreen);
+        return fullscreenCmd->execute();
     }
-    HelpCommand* helpCmd = dynamic_cast<HelpCommand*>(command);
-    if (helpCmd) {
-        helpCmd->execute();
-        return true;
-    }
-    return false;
+    return command->execute();
 }
-

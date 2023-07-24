@@ -4,6 +4,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui-SFML.h"
 #include <mutex>
+#include "Commands/Command.h"
 class Game;
 
 class Console
@@ -17,6 +18,7 @@ private:
 	int count;
 	char str1[128] = "";
 	Game* game;
+	std::vector<std::string> splitString(const std::string& input, char delimiter);
 protected:
 	Console();
 public:
@@ -27,7 +29,9 @@ public:
 	void setGame(Game* game);
 	void setVisiblity(bool visibility);
 	void print(std::string text);
-	bool stringToCommand(std::string command);
+	void print(std::string text, ImVec4 color);
+	Command* stringToCommand(std::string command);
+	bool executeCommand(Command* command);
 	void update();
 	bool clear();
 };

@@ -1,9 +1,9 @@
 #pragma once
 #include "Player.h"
 
-#include <SFML/Graphics/Drawable.hpp>
+#include <SFML/Graphics.hpp>
 
-class ILevel : sf::Drawable {
+class ILevel : public sf::Drawable {
 protected:
 	int state;
 	Player player;
@@ -24,5 +24,5 @@ public:
 	};
 	virtual void initialize() = 0;
 	virtual void update() = 0;
-	virtual void pollEvents() = 0;
+	virtual void pollEvents(sf::Event event) = 0;
 };

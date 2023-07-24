@@ -1,7 +1,11 @@
 #include "Console.h"
 #include "Game.h"
-#include "VersionCommand.h"
-#include "HelpCommand.h"
+#include "Commands/VersionCommand.h"
+#include "Commands/HelpCommand.h"
+#include "Commands/UnknownCommand.h"
+#include "Commands/ClearCommand.h"
+#include "Commands/CloseGameCommand.h"
+#include "Commands/FullscreenCommand.h"
 
 Console::Console()
 {
@@ -37,21 +41,66 @@ void Console::print(std::string text)
     ImVec4 color(1.0f, 1.0f, 1.0f, 1.0f);
     history.emplace_back(text, color);
 }
-
-bool Console::stringToCommand(std::string command)
+void Console::print(std::string text, ImVec4 color)
 {
-    std::transform(command.begin(), command.end(), command.begin(),
+    if (history.size() > 999)
+    {
+        history.erase(history.begin());
+    }
+    history.emplace_back(text, color);
+}
+
+std::vector<std::string> Console::splitString(const std::string& input, char delimiter) {
+    std::vector<std::string> result;
+    size_t startPos = 0;
+    size_t foundPos = input.find(delimiter);
+
+    while (foundPos != std::string::npos) {
+        result.push_back(input.substr(startPos, foundPos - startPos));
+        startPos = foundPos + 1;
+        foundPos = input.find(delimiter, startPos);
+    }
+
+    if (startPos < input.length())
+        result.push_back(input.substr(startPos));
+
+    return result;
+}
+
+Command* Console::stringToCommand(std::string argument)
+{
+    std::transform(argument.begin(), argument.end(), argument.begin(),
         [](unsigned char c) { return std::tolower(c); });
 
-    if (!command.compare("help") || !command.compare("?")) {
-        Command* cmd = new HelpCommand();
-        return game->executeCommand(cmd);
+    std::vector<std::string> arguments = splitString(argument, '=');
+    if (arguments.size() <= 1) {
+        arguments = splitString(argument, ' ');
     }
-    if (!command.compare("version")) {
-        Command* cmd = new VersionCommand(game->getVersion());
-        return game->executeCommand(cmd);
+
+    if (arguments.size() <= 1) {
+        if (!argument.compare("help") || !argument.compare("?"))
+            return new HelpCommand();
+        if (!argument.compare("version"))
+            return new VersionCommand(game->getVersion());
+        if (!argument.compare("clear"))
+            return new ClearCommand();
+        if (!argument.compare("close") || !argument.compare("shutdown"))
+            return new CloseGameCommand(game);
     }
-    return false;
+    else if (arguments.size() == 2) {
+        if (!arguments[0].compare("fullscreen") && (!arguments[arguments.size() - 1].compare("false") || !arguments[arguments.size() - 1].compare("0")))
+            return new FullscreenCommand(game, false);
+        if (!arguments[0].compare("fullscreen") && (!arguments[arguments.size() - 1].compare("true") || !arguments[arguments.size() - 1].compare("1")))
+            return new FullscreenCommand(game, true);
+
+    }
+
+    return new UnknownCommand();
+}
+
+bool Console::executeCommand(Command* command)
+{
+    return command->execute();
 }
 
 void Console::update()
@@ -78,7 +127,7 @@ void Console::update()
 
         ImGui::BeginChild("ScrollingRegion", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar);
         for (const auto& textColorPair : history)
-            ImGui::TextColored(textColorPair.second, ": %s", textColorPair.first.c_str());
+            ImGui::TextColored(textColorPair.second, "%s", textColorPair.first.c_str());
         if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
             ImGui::SetScrollHereY(1.0f);
         ImGui::EndChild();
@@ -99,16 +148,23 @@ void Console::update()
         {
             // Process the entered text here
             // The entered text will be available in the 'callbackBuffer' variable.
-            if (!stringToCommand(callbackBuffer)) {
+            Command* cmd = stringToCommand(callbackBuffer);
+            UnknownCommand* helpCmd = dynamic_cast<UnknownCommand*>(cmd);
+            std::string inputCommand = "> ";
+            inputCommand += callbackBuffer;
+            print(inputCommand);
+            if (helpCmd) {
                 std::string text = "Command: ";
                 text += callbackBuffer;
                 text += " not found";
-                ImVec4 color(1.0f, 0.0f, 0.0f, 1.0f);
-                history.emplace_back(text, color);
+                print(text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
             }
             else {
-                ImVec4 color(1.0f, 1.0f, 1.0f, 1.0f);
-                history.emplace_back(callbackBuffer, color);
+                if (!game->executeCommand(cmd)) {
+                    std::string text = "Failed to execute: ";
+                    text += callbackBuffer;
+                    print(text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+                }
             }
             callbackBuffer[0] = '\0';
         }
